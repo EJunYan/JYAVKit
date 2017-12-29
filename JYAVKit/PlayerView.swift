@@ -10,8 +10,8 @@ import UIKit
 import AVFoundation
 
 /// A simple `UIView` subclass that is backed by an `AVPlayerLayer` layer.
-class PlayerView: UIView {
-    var player: AVPlayer? {
+open class PlayerView: UIView {
+    public var player: AVPlayer? {
         get {
             return playerLayer.player
         }
@@ -21,11 +21,11 @@ class PlayerView: UIView {
         }
     }
     
-    var playerLayer: AVPlayerLayer {
+    public var playerLayer: AVPlayerLayer {
         return layer as! AVPlayerLayer
     }
 
-    override class var layerClass: AnyClass {
+    override open class var layerClass: AnyClass {
         return AVPlayerLayer.self
     }
 }

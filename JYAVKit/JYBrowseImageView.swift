@@ -12,7 +12,7 @@ import UIKit
 // TODO: - 后期加上网络图片加载
 // TODO: - 网络图片下载进度条
 
-class JYBrowseImageView: UIScrollView {
+open class JYBrowseImageView: UIScrollView {
     
     /*
      // Only override draw() if you perform custom drawing.
@@ -24,13 +24,19 @@ class JYBrowseImageView: UIScrollView {
     
     private var imageView: UIImageView?
     
-    init(frame: CGRect, image: UIImage) {
+    public init(frame: CGRect, image: UIImage) {
         
         super.init(frame: frame)
         self.backgroundColor = UIColor.blue.withAlphaComponent(0.3)
         self.delegate = self
         
+        let minScale = imageScale(size: image.size)
+        
         if imageView == nil {
+            // TODO: imgae自适应 进行缩放
+            
+            
+            let frame = CGRect.init(origin: CGPoint.zero, size: image.size)
             imageView = UIImageView(frame: frame)
             self.addSubview(imageView!)
         }
@@ -39,15 +45,22 @@ class JYBrowseImageView: UIScrollView {
         self.showsVerticalScrollIndicator = false
         self.showsHorizontalScrollIndicator = false
         
-        self.minimumZoomScale = 1
+        self.minimumZoomScale = minScale
         self.maximumZoomScale = 3
         
-        self.setZoomScale(1, animated: true)
-        
+        self.setZoomScale(minScale, animated: true)
         
     }
     
-    required init?(coder aDecoder: NSCoder) {
+    func imageScale(size: CGSize)-> CGFloat {
+        if size.width > self.frame.width {
+            let scale = self.frame.width / size.width
+            return scale
+        }
+        return 1.0
+    }
+    
+    required public init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
@@ -58,11 +71,11 @@ class JYBrowseImageView: UIScrollView {
 }
 
 extension JYBrowseImageView: UIScrollViewDelegate {
-    func viewForZooming(in scrollView: UIScrollView) -> UIView? {
+    public func viewForZooming(in scrollView: UIScrollView) -> UIView? {
         return imageView
     }
     
-    func scrollViewDidZoom(_ scrollView: UIScrollView) {
+    public func scrollViewDidZoom(_ scrollView: UIScrollView) {
         let offsetX = (scrollView.bounds.size.width > scrollView.contentSize.width) ?
             (scrollView.bounds.size.width - scrollView.contentSize.width) * 0.5 : 0.0;
         let offsetY = (scrollView.bounds.size.height > scrollView.contentSize.height) ?

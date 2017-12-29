@@ -10,8 +10,8 @@ import UIKit
 import AVFoundation
 
 
-protocol JYBrowseVideoDelegate {
-    func playVideo(error: String)
+public protocol JYBrowseVideoDelegate {
+     func playVideo(error: String)
 }
 
 /*
@@ -20,16 +20,11 @@ protocol JYBrowseVideoDelegate {
  */
 private var playerKVOContext = 0
 
-class JYBrowseVideoView: UIView {
-    
-    
+open class JYBrowseVideoView: NSObject {
     
     // MARK: Properties
     
-    var delegate: JYBrowseVideoDelegate?
-    
-    var playerView: PlayerView = PlayerView()
-    
+
     // Attempt load and test these asset keys before playing.
     static let assetKeysRequiredToPlay = [
         "playable",
@@ -38,7 +33,11 @@ class JYBrowseVideoView: UIView {
     
     @objc let player = AVPlayer()
     
-    var currentTime: Double {
+    open var delegate: JYBrowseVideoDelegate?
+    
+    open var playerView: PlayerView?
+    
+    open var currentTime: Double {
         get {
             return CMTimeGetSeconds(player.currentTime())
         }
@@ -48,13 +47,13 @@ class JYBrowseVideoView: UIView {
         }
     }
     
-    var duration: Double {
+    open var duration: Double {
         guard let currentItem = player.currentItem else { return 0.0 }
         
         return CMTimeGetSeconds(currentItem.duration)
     }
     
-    var rate: Float {
+    open var rate: Float {
         get {
             return player.rate
         }
@@ -64,7 +63,7 @@ class JYBrowseVideoView: UIView {
         }
     }
     
-    var asset: AVURLAsset? {
+    open var asset: AVURLAsset? {
         didSet {
             guard let newAsset = asset else { return }
             
@@ -73,20 +72,10 @@ class JYBrowseVideoView: UIView {
     }
     
     private var playerLayer: AVPlayerLayer? {
-        return playerView.playerLayer
+        return playerView?.playerLayer
     }
     
-    /*
-     A formatter for individual date components used to provide an appropriate
-     value for the `startTimeLabel` and `durationLabel`.
-     */
-    let timeRemainingFormatter: DateComponentsFormatter = {
-        let formatter = DateComponentsFormatter()
-        formatter.zeroFormattingBehavior = .pad
-        formatter.allowedUnits = [.minute, .second]
-        
-        return formatter
-    }()
+
     
     /*
      A token obtained from calling `player`'s `addPeriodicTimeObserverForInterval(_:queue:usingBlock:)`
@@ -169,21 +158,21 @@ class JYBrowseVideoView: UIView {
         }
     }
     
-    func rewind() {
+    open func rewind() {
         // Rewind no faster than -2.0.
         rate = max(player.rate - 2.0, -2.0)
     }
     
-    func fastForward() {
+    open func fastForward() {
         // Fast forward no faster than 2.0.
         rate = min(player.rate + 2.0, 2.0)
     }
     
-    func seek(time: Double) {
+    open func seek(time: Double) {
         currentTime = time
     }
     
-    func playPause() {
+    open func playPause() {
         if player.rate != 1.0 {
             // Not playing forward, so play.
             if currentTime == duration {
@@ -200,15 +189,15 @@ class JYBrowseVideoView: UIView {
     }
     
     /// 视频持续时间 单位:s
-    var durationTime: Float = 0.0
+    open var durationTime: Float = 0.0
     
     /// 播放时间
-    var currentPlayTime: Float = 0.0
+    open var currentPlayTime: Float = 0.0
     
     /// 是否有效视频
-    var hasValidDuration: Bool = false
+    open var hasValidDuration: Bool = false
     
-    func play(url: URL) {
+    open func play(url: URL) {
 
         asset = AVURLAsset(url: url, options: nil)
         
@@ -224,16 +213,18 @@ class JYBrowseVideoView: UIView {
         }
     }
     
-    init(frame: CGRect, url: URL) {
-        super.init(frame: frame)
-        playerView.bounds = frame
-        self.addSubview(playerView)
+    public init(frame: CGRect, url: URL) {
+        super.init()
+        playerView = PlayerView(frame: frame)
+        playerView?.backgroundColor = UIColor.black
+        playerView?.frame = frame
+
         
         addObserver(self, forKeyPath: #keyPath(JYBrowseVideoView.player.currentItem.duration), options: [.new, .initial], context: &playerKVOContext)
         addObserver(self, forKeyPath: #keyPath(JYBrowseVideoView.player.rate), options: [.new, .initial], context: &playerKVOContext)
         addObserver(self, forKeyPath: #keyPath(JYBrowseVideoView.player.currentItem.status), options: [.new, .initial], context: &playerKVOContext)
         
-        playerView.playerLayer.player = player
+        playerView?.playerLayer.player = player
         
 
         play(url: url)
@@ -243,7 +234,7 @@ class JYBrowseVideoView: UIView {
     // MARK: - KVO Observation
     
     // Update our UI when player or `player.currentItem` changes.
-    override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey: Any]?, context: UnsafeMutableRawPointer?) {
+    override open func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey: Any]?, context: UnsafeMutableRawPointer?) {
         // Make sure the this KVO callback was intended for this view controller.
         guard context == &playerKVOContext else {
             super.observeValue(forKeyPath: keyPath, of: object, change: change, context: context)
@@ -337,7 +328,7 @@ class JYBrowseVideoView: UIView {
     }
     
     // Trigger KVO for anyone observing our properties affected by player and player.currentItem
-    override class func keyPathsForValuesAffectingValue(forKey key: String) -> Set<String> {
+    override open class func keyPathsForValuesAffectingValue(forKey key: String) -> Set<String> {
         let affectedKeyPathsMappingByKey: [String: Set<String>] = [
             "duration":     [#keyPath(JYBrowseVideoView.player.currentItem.duration)],
             "rate":         [#keyPath(JYBrowseVideoView.player.rate)]
@@ -359,8 +350,28 @@ class JYBrowseVideoView: UIView {
         removeObserver(self, forKeyPath: #keyPath(JYBrowseVideoView.player.currentItem.status), context: &playerKVOContext)
     }
     
-    required init?(coder aDecoder: NSCoder) {
+    required public init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+    
+    // MARK: Convenience
+    
+    /*
+     A formatter for individual date components used to provide an appropriate
+     value for the `startTimeLabel` and `durationLabel`.
+     */
+    let timeRemainingFormatter: DateComponentsFormatter = {
+        let formatter = DateComponentsFormatter()
+        formatter.zeroFormattingBehavior = .pad
+        formatter.allowedUnits = [.minute, .second]
+        
+        return formatter
+    }()
+    
+    open func createTimeString(time: Float) -> String {
+        let components = NSDateComponents()
+        components.second = Int(max(0.0, time))
+        return timeRemainingFormatter.string(from: components as DateComponents)!
     }
 
 }
